@@ -1,7 +1,6 @@
 import Navigation from "./components/Navigation";
 import DualCodeWindows from "./components/DualCodeWindows";
 import FeatureCard from "./components/FeatureCard";
-import GlowButton from "./components/GlowButton";
 import { BlurFade } from "./components/ui/blur-fade";
 import { GradientText } from "./components/ui/gradient-text";
 import {
