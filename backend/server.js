@@ -50,7 +50,11 @@ passport.use(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: "/auth/github/callback",
+      callbackURL:
+        process.env.GITHUB_CALLBACK_URL ||
+        (process.env.NODE_ENV === "production"
+          ? "https://codra-ai.onrender.com/auth/github/callback"
+          : "http://localhost:5000/auth/github/callback"),
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
