@@ -22,7 +22,7 @@ function GradientText({
   return (
     <MotionComponent
       className={cn(
-        "relative inline-flex overflow-hidden bg-transparent bg-gray-100 dark:bg-gray-900",
+        "relative inline-flex overflow-hidden bg-transparent bg-gray-50 dark:bg-gray-950",
         className
       )}
       {...props}
