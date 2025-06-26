@@ -49,9 +49,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Check for token in URL params (from OAuth redirect)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+
+    if (token) {
+      console.log("🎯 Token found in URL, storing in localStorage");
+      localStorage.setItem("authToken", token);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   const checkAuth = async () => {
     try {
       console.log("🔍 Checking authentication...");
+
+      // Get token from localStorage as backup
+      const storedToken = localStorage.getItem("authToken");
+      console.log("🔍 Stored token exists:", !!storedToken);
 
       // First try with cookies (default)
       let response = await fetch(`${env.API_BASE_URL}/auth/me`, {
@@ -65,17 +82,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       );
 
       // If cookies fail, try with Authorization header
-      if (response.status === 401) {
+      if (response.status === 401 && storedToken) {
         console.log("🔄 Cookies failed, trying Authorization header...");
-        const token = Cookies.get("token");
-        if (token) {
-          response = await fetch(`${env.API_BASE_URL}/auth/me`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          console.log("📡 Auth header response status:", response.status);
-        }
+        response = await fetch(`${env.API_BASE_URL}/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${storedToken}`,
+          },
+        });
+        console.log("📡 Auth header response status:", response.status);
       }
 
       if (response.ok) {
@@ -87,10 +101,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const errorData = await response.text();
         console.log("❌ Auth error:", errorData);
         setUser(null);
+        // Clear invalid token
+        localStorage.removeItem("authToken");
       }
     } catch (error) {
       console.error("❌ Auth check failed:", error);
       setUser(null);
+      localStorage.removeItem("authToken");
     } finally {
       setLoading(false);
     }
@@ -108,6 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       setUser(null);
       Cookies.remove("token");
+      localStorage.removeItem("authToken"); // Clear localStorage token
     } catch (error) {
       console.error("Logout failed:", error);
     }

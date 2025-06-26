@@ -126,12 +126,17 @@ passport.deserializeUser((user, done) => {
 
 // Middleware to check authentication
 const requireAuth = (req, res, next) => {
-  console.log("🔍 Auth check - Cookies:", req.cookies);
-  console.log("🔍 Auth check - Headers:", req.headers.authorization);
+  console.log("🔍 Auth check - Full request headers:", req.headers);
+  console.log("🔍 Auth check - Cookies object:", req.cookies);
+  console.log("🔍 Auth check - Raw cookie header:", req.headers.cookie);
 
   const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
 
   console.log("🔍 Auth check - Token found:", !!token);
+  console.log(
+    "🔍 Auth check - Token value:",
+    token ? token.substring(0, 20) + "..." : "none"
+  );
 
   if (!token) {
     console.log("❌ No token provided");
@@ -182,14 +187,14 @@ app.get(
 
     // Set cookie
     res.cookie("token", token, {
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Redirect to frontend dashboard
-    res.redirect(`${process.env.FRONTEND_URL}/`);
+    // Also send token in response body for frontend to store
+    res.redirect(`${process.env.FRONTEND_URL}/?token=${token}`);
   }
 );
 
