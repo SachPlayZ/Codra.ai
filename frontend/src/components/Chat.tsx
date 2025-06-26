@@ -4,13 +4,9 @@ import { Navigate } from "react-router-dom";
 import {
   MessageSquare,
   Plus,
-  History,
-  Settings,
   Trash2,
-  Edit3,
   Send,
   Bot,
-  User,
   Sparkles,
   Lightbulb,
   Target,
@@ -19,16 +15,11 @@ import {
   Clock,
   MoreVertical,
   Search,
-  Archive,
   Star,
   AlertCircle,
   Loader2,
-  Activity,
-  Zap,
   ChevronUp,
-  ChevronDown,
   Heart,
-  Bookmark,
   ArrowDown,
 } from "lucide-react";
 import { UserAvatar } from "./UserAvatar";
@@ -352,18 +343,6 @@ export const Chat: React.FC = () => {
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
-
-  const formatDate = (date: string) => {
-    const messageDate = new Date(date);
-    const now = new Date();
-    const diff = now.getTime() - messageDate.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) return "Today";
-    if (days === 1) return "Yesterday";
-    if (days < 7) return `${days} days ago`;
-    return messageDate.toLocaleDateString();
   };
 
   // Helper function to determine session type/theme
