@@ -42,7 +42,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
   })
@@ -126,9 +126,15 @@ passport.deserializeUser((user, done) => {
 
 // Middleware to check authentication
 const requireAuth = (req, res, next) => {
+  console.log("🔍 Auth check - Cookies:", req.cookies);
+  console.log("🔍 Auth check - Headers:", req.headers.authorization);
+
   const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
 
+  console.log("🔍 Auth check - Token found:", !!token);
+
   if (!token) {
+    console.log("❌ No token provided");
     return res.status(401).json({ message: "No token provided" });
   }
 
@@ -137,9 +143,11 @@ const requireAuth = (req, res, next) => {
       token,
       process.env.JWT_SECRET || "fallback-secret"
     );
+    console.log("✅ Token verified for user:", decoded.username);
     req.user = decoded;
     next();
   } catch (error) {
+    console.log("❌ Token verification failed:", error.message);
     return res.status(401).json({ message: "Invalid token" });
   }
 };
@@ -176,7 +184,7 @@ app.get(
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -189,7 +197,7 @@ app.post("/auth/logout", (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    sameSite: "lax",
   });
   req.logout((err) => {
     if (err) {

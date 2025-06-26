@@ -52,7 +52,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuth = async () => {
     try {
       console.log("🔍 Checking authentication...");
-      const response = await fetch(`${env.API_BASE_URL}/auth/me`, {
+
+      // First try with cookies (default)
+      let response = await fetch(`${env.API_BASE_URL}/auth/me`, {
         credentials: "include",
       });
 
@@ -61,6 +63,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         "📡 Auth response headers:",
         Object.fromEntries(response.headers.entries())
       );
+
+      // If cookies fail, try with Authorization header
+      if (response.status === 401) {
+        console.log("🔄 Cookies failed, trying Authorization header...");
+        const token = Cookies.get("token");
+        if (token) {
+          response = await fetch(`${env.API_BASE_URL}/auth/me`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          console.log("📡 Auth header response status:", response.status);
+        }
+      }
 
       if (response.ok) {
         const userData = await response.json();
