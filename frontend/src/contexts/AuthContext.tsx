@@ -51,18 +51,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuth = async () => {
     try {
+      console.log("🔍 Checking authentication...");
       const response = await fetch(`${env.API_BASE_URL}/auth/me`, {
         credentials: "include",
       });
 
+      console.log("📡 Auth response status:", response.status);
+      console.log(
+        "📡 Auth response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
       if (response.ok) {
         const userData = await response.json();
+        console.log("✅ User authenticated:", userData);
         setUser(userData);
       } else {
+        console.log("❌ Auth failed, status:", response.status);
+        const errorData = await response.text();
+        console.log("❌ Auth error:", errorData);
         setUser(null);
       }
     } catch (error) {
-      console.error("Auth check failed:", error);
+      console.error("❌ Auth check failed:", error);
       setUser(null);
     } finally {
       setLoading(false);
