@@ -10,10 +10,15 @@ class ApiError extends Error {
 const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
   
+  // Get token from localStorage as backup
+  const storedToken = localStorage.getItem('authToken');
+  
   const config: RequestInit = {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      // Add Authorization header if token exists
+      ...(storedToken && { 'Authorization': `Bearer ${storedToken}` }),
       ...options.headers,
     },
     ...options,
