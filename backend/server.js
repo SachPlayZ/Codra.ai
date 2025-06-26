@@ -172,7 +172,7 @@ app.get(
     });
 
     // Redirect to frontend dashboard
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+    res.redirect(`${process.env.FRONTEND_URL}/`);
   }
 );
 
