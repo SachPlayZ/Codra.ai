@@ -24,7 +24,7 @@ app.use(
   cors({
     origin: [
       process.env.FRONTEND_URL || "http://localhost:3000",
-      "https://codra-ai.netlify.app",
+      "https://codra.netlify.app",
       "https://codra-ai-frontend.netlify.app",
       "https://codra-ai.vercel.app",
       "http://localhost:5173",
