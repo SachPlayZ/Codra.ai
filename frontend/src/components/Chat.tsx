@@ -25,6 +25,7 @@ import {
 import { UserAvatar } from "./UserAvatar";
 import { GradientText } from "./ui/gradient-text";
 import { RainbowButton } from "./ui/rainbow-button";
+import { TextShimmer } from "./ui/text-shimmer";
 import { IdeaCards } from "./IdeaCards";
 import { IdeaDetailDialog } from "./IdeaDetailDialog";
 import { Button } from "./ui/button";
@@ -539,6 +540,17 @@ export const Chat: React.FC = () => {
                     // Refresh favorites when an idea is starred from chat
                     loadFavoriteIdeas();
                   }}
+                  sessionMetadata={
+                    selectedSession?.hackathonId
+                      ? {
+                          hackathonId: selectedSession.hackathonId,
+                          hackathonTitle: selectedSession.title.replace(
+                            "Brainstorming: ",
+                            ""
+                          ),
+                        }
+                      : undefined
+                  }
                 />
                 {afterJson && (
                   <div className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none">
@@ -568,6 +580,17 @@ export const Chat: React.FC = () => {
                 // Refresh favorites when an idea is starred from chat
                 loadFavoriteIdeas();
               }}
+              sessionMetadata={
+                selectedSession?.hackathonId
+                  ? {
+                      hackathonId: selectedSession.hackathonId,
+                      hackathonTitle: selectedSession.title.replace(
+                        "Brainstorming: ",
+                        ""
+                      ),
+                    }
+                  : undefined
+              }
             />
           </div>
         );
@@ -601,7 +624,7 @@ export const Chat: React.FC = () => {
   const selectedSession = chatSessions.find((s) => s._id === selectedSessionId);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-100 dark:from-gray-900 dark:via-black dark:to-gray-900 text-gray-900 dark:text-white pt-16">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-100 dark:from-gray-900 dark:via-black dark:to-gray-900 text-gray-900 dark:text-white pt-16 animate-in fade-in duration-500">
       {/* Background effects */}
       <div className="fixed inset-0 opacity-20 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
@@ -613,7 +636,7 @@ export const Chat: React.FC = () => {
         <div
           className={`${
             sidebarCollapsed ? "w-16" : "w-80"
-          } transition-all duration-300 bg-white/60 dark:bg-black/40 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-800/50 flex flex-col`}
+          } transition-all bg-white/60 dark:bg-black/40 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-800/50 flex flex-col animate-in slide-in-from-left-4 duration-700`}
         >
           {/* Sidebar Header */}
           <div className="p-4 border-b border-gray-200/50 dark:border-gray-800/50">
@@ -696,14 +719,15 @@ export const Chat: React.FC = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  chatSessions.map((session) => (
+                  chatSessions.map((session, index) => (
                     <Card
                       key={session._id}
-                      className={`group mx-2 cursor-pointer transition-all duration-200 hover:shadow-md backdrop-blur-sm ${
+                      className={`group mx-2 cursor-pointer transition-all hover:shadow-md backdrop-blur-sm animate-in slide-in-from-left-2 duration-500 ${
                         selectedSessionId === session._id
-                          ? "bg-blue-50/80 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 shadow-md"
+                          ? "bg-zinc-100/80 dark:bg-zinc-700/50 border-zinc-300 dark:border-zinc-600 shadow-md ring-1 ring-zinc-200 dark:ring-zinc-600"
                           : "bg-white/40 dark:bg-gray-800/40 border-gray-200/50 dark:border-gray-700/50 hover:bg-white/60 dark:hover:bg-gray-800/60"
                       }`}
+                      style={{ animationDelay: `${index * 100}ms` }}
                       onClick={() => setSelectedSessionId(session._id)}
                     >
                       <CardContent className="p-4">
@@ -900,7 +924,7 @@ export const Chat: React.FC = () => {
         </div>
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col relative">
+        <div className="flex-1 flex flex-col relative animate-in slide-in-from-right-4 duration-700 delay-150">
           {/* Messages Area */}
           <div
             ref={messagesContainerRef}
@@ -973,7 +997,7 @@ export const Chat: React.FC = () => {
                         className={`px-4 py-3 rounded-2xl ${
                           message.type === "user"
                             ? "bg-gradient-to-br from-purple-950 via-black to-yellow-950 dark:bg-gradient-to-br dark:from-purple-50 dark:via-white dark:to-yellow-50 text-white dark:text-gray-800"
-                            : "bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50"
+                            : "bg-zinc-50/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50"
                         } ${message.isOptimistic ? "opacity-70" : ""}`}
                       >
                         {renderMessage(message)}
@@ -1015,15 +1039,13 @@ export const Chat: React.FC = () => {
             {isTyping && (
               <div className="flex justify-start">
                 <div className="flex space-x-3 max-w-3xl">
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-950 via-black to-yellow-950 dark:bg-gradient-to-br dark:from-purple-50 dark:via-white dark:to-yellow-50 rounded-lg flex items-center justify-center">
+                  <div className="mt-2 w-8 h-8 bg-gradient-to-br from-purple-950 via-black to-yellow-950 dark:bg-gradient-to-br dark:from-purple-50 dark:via-white dark:to-yellow-50 rounded-lg flex items-center justify-center">
                     <Bot className="w-4 h-4 text-white dark:text-gray-800" />
                   </div>
                   <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 px-4 py-3 rounded-2xl">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
-                    </div>
+                    <TextShimmer className="text-sm font-mono" duration={1}>
+                      Generating response...
+                    </TextShimmer>
                   </div>
                 </div>
               </div>
@@ -1078,7 +1100,8 @@ export const Chat: React.FC = () => {
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {selectedSession
-                      ? `${selectedSession.messageCount} messages`
+                      ? selectedSession.description ||
+                        "Ready to help you ideate and strategize"
                       : "Ready to help you ideate and strategize"}
                   </p>
                 </div>
@@ -1177,6 +1200,17 @@ export const Chat: React.FC = () => {
           // Refresh favorites when an idea is starred/unstarred
           loadFavoriteIdeas();
         }}
+        sessionMetadata={
+          selectedSession?.hackathonId
+            ? {
+                hackathonId: selectedSession.hackathonId,
+                hackathonTitle: selectedSession.title.replace(
+                  "Brainstorming: ",
+                  ""
+                ),
+              }
+            : undefined
+        }
       />
     </div>
   );

@@ -32,6 +32,7 @@ interface IdeaCardsProps {
   ideas: IdeaData[];
   onCopyIdea?: (idea: IdeaData) => void;
   onStarIdea?: (idea: IdeaData) => void;
+  sessionMetadata?: Record<string, any>;
 }
 
 const getComplexityColor = (complexity: string) => {
@@ -66,6 +67,7 @@ export const IdeaCards: React.FC<IdeaCardsProps> = ({
   ideas,
   onCopyIdea,
   onStarIdea,
+  sessionMetadata,
 }) => {
   const [selectedIdea, setSelectedIdea] = useState<IdeaData | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -100,7 +102,7 @@ export const IdeaCards: React.FC<IdeaCardsProps> = ({
         {ideas.map((idea, index) => (
           <Card
             key={index}
-            className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 hover:scale-[1.02] cursor-pointer hover:border-blue-300/50 dark:hover:border-blue-600/50"
+            className="group bg-zinc-50/90 dark:bg-zinc-800/90 backdrop-blur-sm border border-zinc-200/50 dark:border-zinc-700/50 hover:shadow-xl hover:shadow-zinc-500/10 transition-all duration-300 hover:scale-[1.02] cursor-pointer hover:border-zinc-300/50 dark:hover:border-zinc-600/50"
             onClick={() => openIdeaDetails(idea)}
           >
             <CardHeader className="pb-3">
@@ -157,7 +159,7 @@ export const IdeaCards: React.FC<IdeaCardsProps> = ({
                       e.stopPropagation();
                       openIdeaDetails(idea);
                     }}
-                    className="h-8 w-8 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-500"
+                    className="h-8 w-8 hover:bg-zinc-100 dark:hover:bg-zinc-900/30 text-zinc-500"
                     title="View details"
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -179,8 +181,8 @@ export const IdeaCards: React.FC<IdeaCardsProps> = ({
                 {/* Tech Stack Preview */}
                 <div className="space-y-2">
                   <div className="flex items-center space-x-1">
-                    <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                      <Code className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                    <div className="w-6 h-6 bg-zinc-100 dark:bg-zinc-900/30 rounded-lg flex items-center justify-center">
+                      <Code className="w-3 h-3 text-zinc-600 dark:text-zinc-400" />
                     </div>
                     <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                       Tech Stack
@@ -191,7 +193,7 @@ export const IdeaCards: React.FC<IdeaCardsProps> = ({
                       <Badge
                         key={techIndex}
                         variant="secondary"
-                        className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                        className="text-xs bg-zinc-50 dark:bg-zinc-900/20 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800"
                       >
                         {tech}
                       </Badge>
@@ -238,7 +240,7 @@ export const IdeaCards: React.FC<IdeaCardsProps> = ({
                       e.stopPropagation();
                       openIdeaDetails(idea);
                     }}
-                    className="h-7 px-3 text-xs bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 hover:from-blue-100 hover:to-purple-100 dark:hover:from-blue-900/30 dark:hover:to-purple-900/30 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-700/50 hover:border-blue-300 dark:hover:border-blue-600 transition-all group-hover:translate-x-1"
+                    className="h-7 px-3 text-xs bg-gradient-to-r from-zinc-50 to-zinc-100 dark:from-zinc-900/20 dark:to-zinc-800/20 hover:from-zinc-100 hover:to-zinc-200 dark:hover:from-zinc-900/30 dark:hover:to-zinc-800/30 text-zinc-700 dark:text-zinc-300 border border-zinc-200/50 dark:border-zinc-700/50 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all group-hover:translate-x-1"
                   >
                     <span>View Details</span>
                     <ArrowRight className="w-3 h-3 ml-1" />
@@ -257,6 +259,7 @@ export const IdeaCards: React.FC<IdeaCardsProps> = ({
         onClose={closeDialog}
         onCopyIdea={onCopyIdea}
         onStarIdea={onStarIdea}
+        sessionMetadata={sessionMetadata}
       />
     </>
   );

@@ -6,6 +6,7 @@ import {
   LogOut,
   ChevronDown,
   MessageSquare,
+  Globe,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { UserAvatar } from "./UserAvatar";
@@ -120,6 +121,15 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
             >
               <MessageSquare className="w-4 h-4 mr-3" />
               AI Chat
+            </Link>
+
+            <Link
+              to="/hackathons"
+              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-900/50 hover:text-gray-900 dark:hover:text-white transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              <Globe className="w-4 h-4 mr-3" />
+              Hackathons
             </Link>
 
             <hr className="my-2 border-gray-200/50 dark:border-gray-800/50" />

@@ -32,7 +32,14 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
       throw new ApiError(response.status, errorData.error || errorData.message || 'Request failed');
     }
 
-    return await response.json();
+    const result = await response.json();
+    
+    // Handle ApiResponse wrapper - extract data property if it exists
+    if (result && typeof result === 'object' && 'data' in result) {
+      return result.data;
+    }
+    
+    return result;
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
@@ -50,7 +57,7 @@ export interface ChatSession {
   messageCount: number;
   lastMessageAt: string;
   tags: string[];
-  metadata: Record<string, any>;
+  hackathonId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -131,6 +138,68 @@ export interface User {
   createdAt: string;
 }
 
+export interface Hackathon {
+  _id: string;
+  userId: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  endDateTime?: string;
+  timezone?: string;
+  icon?: string;
+  totalPrizePool?: string;
+  tracks: Array<{
+    name: string;
+    totalPrize?: string;
+    subTracks: Array<{
+      name: string;
+      description: string;
+      prizes: {
+        first?: string;
+        second?: string;
+        third?: string;
+      };
+    }>;
+  }>;
+  prizes: Array<{
+    amount: string;
+    description: string;
+  }>;
+  rules: string[];
+  link: string;
+  scrapedAt: string;
+  isActive: boolean;
+  metadata: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HackathonStats {
+  totalHackathons: number;
+  activeHackathons: number;
+  upcomingHackathons: number;
+}
+
+export interface HackathonProject {
+  _id: string;
+  hackathonId: string;
+  userId: string;
+  title: string;
+  description: string;
+  usp: string;
+  techStack: string[];
+  targetAudience: string[];
+  implementationComplexity: 'Beginner' | 'Intermediate' | 'Advanced';
+  estimatedTimeline: '12 hrs' | '24 hrs' | '36 hrs' | '48 hrs';
+  marketPotential: string;
+  socialImpact: string[];
+  sourceMessageId?: string;
+  notes?: string;
+  progress?: 'planning' | 'development' | 'testing' | 'submission' | 'completed';
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Auth API
 export const authApi = {
   getMe: () => apiRequest('/auth/me'),
@@ -159,6 +228,7 @@ export const chatSessionsApi = {
     title?: string;
     description?: string;
     tags?: string[];
+    hackathonId?: string;
   }) => apiRequest('/api/chat/sessions', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -267,6 +337,73 @@ export const favoriteIdeasApi = {
 // Stats API
 export const statsApi = {
   getChatStats: () => apiRequest('/api/chat/stats'),
+};
+
+// Hackathon API
+export const hackathonApi = {
+  scrapeHackathon: (data: { url: string }) =>
+    apiRequest('/api/hackathons/scrape', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getHackathons: (params?: {
+    page?: number;
+    limit?: number;
+    isActive?: boolean;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.isActive !== undefined) searchParams.append('isActive', params.isActive.toString());
+    
+    const query = searchParams.toString();
+    return apiRequest(`/api/hackathons${query ? `?${query}` : ''}`);
+  },
+
+  getHackathon: (hackathonId: string) =>
+    apiRequest(`/api/hackathons/${hackathonId}`),
+
+  updateHackathon: (hackathonId: string, data: Partial<Hackathon>) =>
+    apiRequest(`/api/hackathons/${hackathonId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteHackathon: (hackathonId: string) =>
+    apiRequest(`/api/hackathons/${hackathonId}`, {
+      method: 'DELETE',
+    }),
+
+  importProject: (hackathonId: string, projectData: {
+    title: string;
+    description: string;
+    usp: string;
+    techStack: string[];
+    targetAudience: string[];
+    implementationComplexity: string;
+    estimatedTimeline: string;
+    marketPotential: string;
+    socialImpact: string[];
+    sourceMessageId?: string;
+  }) => apiRequest(`/api/hackathons/${hackathonId}/project`, {
+    method: 'POST',
+    body: JSON.stringify(projectData),
+  }),
+
+  getProject: (hackathonId: string) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project`),
+
+  updateProject: (hackathonId: string, projectData: any) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project`, {
+      method: 'PUT',
+      body: JSON.stringify(projectData),
+    }),
+
+  deleteProject: (hackathonId: string) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project`, {
+      method: 'DELETE',
+    }),
 };
 
 export { ApiError }; 

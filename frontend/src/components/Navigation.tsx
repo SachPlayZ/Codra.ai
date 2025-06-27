@@ -10,6 +10,7 @@ import {
   LogOut,
   LayoutDashboard,
   MessageSquare,
+  Globe,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
@@ -173,7 +174,13 @@ const Navigation: React.FC = () => {
                     {location.pathname === "/chat" && (
                       <span className="flex items-center space-x-2">
                         <MessageSquare className="w-4 h-4" />
-                        <span>AI Chat</span>
+                        <span>Minerva</span>
+                      </span>
+                    )}
+                    {location.pathname === "/hackathons" && (
+                      <span className="flex items-center space-x-2">
+                        <Globe className="w-4 h-4" />
+                        <span>Hackathons</span>
                       </span>
                     )}
                   </div>
@@ -353,7 +360,22 @@ const Navigation: React.FC = () => {
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 bg-white/20">
                           <MessageSquare className="w-4 h-4" />
                         </div>
-                        <span className="flex-1">AI Chat</span>
+                        <span className="flex-1">Minerva</span>
+                      </Link>
+
+                      <Link
+                        to="/hackathons"
+                        className={`group flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-300 ${
+                          isActive("/hackathons")
+                            ? "bg-gradient-to-r from-blue-500 to-teal-500 text-white"
+                            : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/50 dark:hover:bg-gray-900/50"
+                        }`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 bg-white/20">
+                          <Globe className="w-4 h-4" />
+                        </div>
+                        <span className="flex-1">Hackathons</span>
                       </Link>
 
                       <button

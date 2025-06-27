@@ -64,42 +64,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      console.log("🔍 Checking authentication...");
-
       // Get token from localStorage as backup
       const storedToken = localStorage.getItem("authToken");
-      console.log("🔍 Stored token exists:", !!storedToken);
 
-      // First try with cookies (default)
+      // Try with both cookies and Authorization header
       let response = await fetch(`${env.API_BASE_URL}/auth/me`, {
         credentials: "include",
+        headers: {
+          // Add Authorization header if token exists
+          ...(storedToken && { Authorization: `Bearer ${storedToken}` }),
+        },
       });
-
-      console.log("📡 Auth response status:", response.status);
-      console.log(
-        "📡 Auth response headers:",
-        Object.fromEntries(response.headers.entries())
-      );
-
-      // If cookies fail, try with Authorization header
-      if (response.status === 401 && storedToken) {
-        console.log("🔄 Cookies failed, trying Authorization header...");
-        response = await fetch(`${env.API_BASE_URL}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${storedToken}`,
-          },
-        });
-        console.log("📡 Auth header response status:", response.status);
-      }
 
       if (response.ok) {
         const userData = await response.json();
-        console.log("✅ User authenticated:", userData);
         setUser(userData);
       } else {
-        console.log("❌ Auth failed, status:", response.status);
-        const errorData = await response.text();
-        console.log("❌ Auth error:", errorData);
         setUser(null);
         // Clear invalid token
         localStorage.removeItem("authToken");

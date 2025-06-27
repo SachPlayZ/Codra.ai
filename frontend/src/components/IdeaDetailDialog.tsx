@@ -12,19 +12,15 @@ import {
   Copy,
   Star,
   CheckCircle,
-  ExternalLink,
+  Download,
   Zap,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
-import { favoriteIdeasApi, ApiError } from "../services/api";
+import { favoriteIdeasApi, hackathonApi, ApiError } from "../services/api";
 
 interface IdeaData {
   "Idea Title": string;
@@ -44,6 +40,7 @@ interface IdeaDetailDialogProps {
   onClose: () => void;
   onCopyIdea?: (idea: IdeaData) => void;
   onStarIdea?: (idea: IdeaData) => void;
+  sessionMetadata?: Record<string, any>;
 }
 
 const getComplexityVariant = (
@@ -84,11 +81,14 @@ export const IdeaDetailDialog: React.FC<IdeaDetailDialogProps> = ({
   onClose,
   onCopyIdea,
   onStarIdea,
+  sessionMetadata,
 }) => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importSuccess, setImportSuccess] = useState(false);
 
   // Handle ESC key press
   React.useEffect(() => {
@@ -127,6 +127,10 @@ export const IdeaDetailDialog: React.FC<IdeaDetailDialogProps> = ({
   }, [idea, isOpen]);
 
   if (!isOpen || !idea) return null;
+
+  const hackathonId = sessionMetadata?.hackathonId;
+  const hackathonTitle = sessionMetadata?.hackathonTitle;
+  const hasHackathonContext = Boolean(hackathonId);
 
   const handleCopy = async () => {
     const ideaText = `**${idea["Idea Title"]}**\n\n${
@@ -195,6 +199,36 @@ export const IdeaDetailDialog: React.FC<IdeaDetailDialogProps> = ({
     }
   };
 
+  const handleImportToHackathon = async () => {
+    if (!hasHackathonContext || isImporting) return;
+
+    setIsImporting(true);
+    try {
+      const projectData = {
+        title: idea["Idea Title"],
+        description: idea["Idea Description"],
+        usp: idea["USP"],
+        techStack: idea["Tech Stack"],
+        targetAudience: idea["Target Audience"],
+        implementationComplexity: idea["Implementation Complexity"],
+        estimatedTimeline: idea["Estimated Timeline"],
+        marketPotential: idea["Market Potential"],
+        socialImpact: idea["Social Impact"],
+      };
+
+      await hackathonApi.importProject(hackathonId, projectData);
+      setImportSuccess(true);
+      setTimeout(() => {
+        setImportSuccess(false);
+        onClose();
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to import project to hackathon:", error);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -236,6 +270,14 @@ export const IdeaDetailDialog: React.FC<IdeaDetailDialogProps> = ({
                     <Clock className="w-3 h-3 mr-1" />
                     {idea["Estimated Timeline"]}
                   </Badge>
+                  {hasHackathonContext && (
+                    <Badge
+                      variant="secondary"
+                      className="font-medium backdrop-blur-sm bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                    >
+                      🏆 {hackathonTitle}
+                    </Badge>
+                  )}
                 </div>
               </div>
 
@@ -422,20 +464,37 @@ export const IdeaDetailDialog: React.FC<IdeaDetailDialogProps> = ({
                 or click outside to close
               </div>
               <div className="flex space-x-3">
-                <Button className="relative group bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-700 hover:via-purple-700 hover:to-indigo-700 text-white font-semibold px-6 py-2.5 rounded-xl backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 before:absolute before:inset-0 before:bg-gradient-to-r before:from-violet-400 before:via-purple-400 before:to-indigo-400 before:rounded-xl before:blur-xl before:opacity-0 group-hover:before:opacity-30 before:transition-opacity before:duration-300 overflow-hidden">
-                  <div className="relative flex items-center z-10">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Start Planning
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out"></div>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-purple-200 hover:bg-purple-50/80 hover:text-purple-700 backdrop-blur-sm hover:border-purple-300 transition-all duration-200"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Find Team
-                </Button>
+                {hasHackathonContext ? (
+                  <Button
+                    onClick={handleImportToHackathon}
+                    disabled={isImporting}
+                    className="relative group bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-700 hover:via-purple-700 hover:to-indigo-700 text-white font-semibold px-6 py-2.5 rounded-xl backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 before:absolute before:inset-0 before:bg-gradient-to-r before:from-violet-400 before:via-purple-400 before:to-indigo-400 before:rounded-xl before:blur-xl before:opacity-0 group-hover:before:opacity-30 before:transition-opacity before:duration-300 overflow-hidden"
+                  >
+                    <div className="relative flex items-center z-10">
+                      {isImporting ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : importSuccess ? (
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                      ) : (
+                        <Download className="w-4 h-4 mr-2" />
+                      )}
+                      {isImporting
+                        ? "Importing..."
+                        : importSuccess
+                        ? "Imported!"
+                        : "Import to Hackathon"}
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out"></div>
+                  </Button>
+                ) : (
+                  <Button className="relative group bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-700 hover:via-purple-700 hover:to-indigo-700 text-white font-semibold px-6 py-2.5 rounded-xl backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 before:absolute before:inset-0 before:bg-gradient-to-r before:from-violet-400 before:via-purple-400 before:to-indigo-400 before:rounded-xl before:blur-xl before:opacity-0 group-hover:before:opacity-30 before:transition-opacity before:duration-300 overflow-hidden">
+                    <div className="relative flex items-center z-10">
+                      <Lightbulb className="w-4 h-4 mr-2" />
+                      Start Planning
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out"></div>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
