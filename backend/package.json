@@ -19,7 +19,10 @@
     "cookie-parser": "^1.4.6",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.3",
-    "@google/generative-ai": "^0.2.1"
+    "@google/generative-ai": "^0.2.1",
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0-rc.12",
+    "mongoose-paginate-v2": "^1.7.4"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

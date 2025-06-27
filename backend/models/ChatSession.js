@@ -36,6 +36,11 @@ const chatSessionSchema = new mongoose.Schema(
         trim: true,
       },
     ],
+    hackathonId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hackathon",
+      default: null,
+    },
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {},

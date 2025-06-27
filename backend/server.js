@@ -10,6 +10,7 @@ import connectDB from "./config/database.js";
 import User from "./models/User.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import favoriteIdeaRoutes from "./routes/favoriteIdeaRoutes.js";
+import hackathonRoutes from "./routes/hackathonRoutes.js";
 
 dotenv.config();
 
@@ -126,20 +127,9 @@ passport.deserializeUser((user, done) => {
 
 // Middleware to check authentication
 const requireAuth = (req, res, next) => {
-  console.log("🔍 Auth check - Full request headers:", req.headers);
-  console.log("🔍 Auth check - Cookies object:", req.cookies);
-  console.log("🔍 Auth check - Raw cookie header:", req.headers.cookie);
-
   const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
 
-  console.log("🔍 Auth check - Token found:", !!token);
-  console.log(
-    "🔍 Auth check - Token value:",
-    token ? token.substring(0, 20) + "..." : "none"
-  );
-
   if (!token) {
-    console.log("❌ No token provided");
     return res.status(401).json({ message: "No token provided" });
   }
 
@@ -148,11 +138,9 @@ const requireAuth = (req, res, next) => {
       token,
       process.env.JWT_SECRET || "fallback-secret"
     );
-    console.log("✅ Token verified for user:", decoded.username);
     req.user = decoded;
     next();
   } catch (error) {
-    console.log("❌ Token verification failed:", error.message);
     return res.status(401).json({ message: "Invalid token" });
   }
 };
@@ -270,6 +258,9 @@ app.use("/api/chat", requireAuth, chatRoutes);
 
 // Favorite ideas routes - protected
 app.use("/api/favorites", requireAuth, favoriteIdeaRoutes);
+
+// Hackathon routes - protected
+app.use("/api/hackathons", requireAuth, hackathonRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

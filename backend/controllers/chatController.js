@@ -50,13 +50,14 @@ export const getUserChatSessions = async (req, res) => {
 export const createChatSession = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { title, description, tags } = req.body;
+    const { title, description, tags, hackathonId } = req.body;
 
     const newSession = new ChatSession({
       userId,
       title: title || "New Minerva Session",
       description: description || "",
       tags: tags || [],
+      hackathonId: hackathonId || null,
     });
 
     await newSession.save();
