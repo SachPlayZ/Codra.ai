@@ -14,6 +14,8 @@ import {
   Search,
   X,
   FolderOpen,
+  Users,
+  Check,
 } from "lucide-react";
 import { GradientText } from "./ui/gradient-text";
 import { RainbowButton } from "./ui/rainbow-button";
@@ -491,6 +493,86 @@ I'm ready to discuss any questions about this hackathon, including technical imp
     null
   );
 
+  // Team joining state
+  const [showJoinTeam, setShowJoinTeam] = useState(false);
+  const [joinCodeInput, setJoinCodeInput] = useState("");
+  const [joiningTeam, setJoiningTeam] = useState(false);
+  const [teamJoinSuccess, setTeamJoinSuccess] = useState<{
+    teamCode: string;
+    projectTitle: string;
+    hackathonId: string;
+  } | null>(null);
+
+  // Team joining function
+  const handleJoinTeam = async () => {
+    if (!joinCodeInput.trim() || joinCodeInput.length !== 6) return;
+
+    setJoiningTeam(true);
+    setError(null);
+
+    try {
+      const response = await hackathonApi.joinTeamByCode(
+        joinCodeInput.toUpperCase()
+      );
+
+      setTeamJoinSuccess({
+        teamCode: response.teamCode,
+        projectTitle: response.project.title,
+        hackathonId: response.project.hackathonId,
+      });
+
+      setJoinCodeInput("");
+      setShowJoinTeam(false);
+
+      // Check if user already has this hackathon in their dashboard
+      const existingHackathon = hackathons.find(
+        (h) => h._id === response.project.hackathonId
+      );
+
+      if (!existingHackathon && response.hackathon) {
+        // If hackathon is not in dashboard, add it using the returned hackathon data
+        setHackathons((prev) => [response.hackathon, ...prev]);
+        setHackathonProjects((prev) => ({
+          ...prev,
+          [response.hackathon._id]: response.project,
+        }));
+        console.log(
+          `✅ Added new hackathon "${response.hackathon.title}" to dashboard`
+        );
+      } else if (existingHackathon) {
+        // Update existing hackathon's project data
+        setHackathonProjects((prev) => ({
+          ...prev,
+          [response.project.hackathonId]: response.project,
+        }));
+        console.log(
+          `✅ Updated project for existing hackathon "${existingHackathon.title}"`
+        );
+      } else {
+        // Fallback: refresh hackathons to ensure consistency
+        console.log("⚠️ Fallback: refreshing hackathons to ensure consistency");
+        await loadHackathons();
+      }
+
+      setSuccessMessage(
+        `🎉 Successfully joined team ${response.teamCode}! Project "${response.project.title}" has been added to your dashboard.`
+      );
+      setTimeout(() => {
+        setSuccessMessage(null);
+        setTeamJoinSuccess(null);
+      }, 5000);
+    } catch (err) {
+      console.error("Failed to join team:", err);
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Failed to join team. Please check your team code and try again."
+      );
+    } finally {
+      setJoiningTeam(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 via-white to-gray-100 dark:from-gray-900 dark:via-black dark:to-gray-900">
@@ -504,7 +586,7 @@ I'm ready to discuss any questions about this hackathon, including technical imp
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-100 dark:from-gray-900 dark:via-black dark:to-gray-900 text-gray-900 dark:text-white pt-16 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-100 dark:from-gray-900 dark:via-black dark:to-gray-900 text-gray-900 dark:text-white pt-16">
       {/* Background effects */}
       <div className="fixed inset-0 opacity-20 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
@@ -513,7 +595,7 @@ I'm ready to discuss any questions about this hackathon, including technical imp
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 animate-in slide-in-from-top-4 duration-700">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
               <GradientText>Hackathon Dashboard</GradientText>
@@ -522,13 +604,127 @@ I'm ready to discuss any questions about this hackathon, including technical imp
               Discover, track, and brainstorm for hackathons
             </p>
           </div>
-          <div className="mt-4 md:mt-0">
+          <div className="mt-4 md:mt-0 flex space-x-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowJoinTeam(true)}
+              className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Join Team
+            </Button>
             <RainbowButton onClick={() => setShowAddForm(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Add Hackathon
             </RainbowButton>
           </div>
         </div>
+
+        {/* Join Team Section */}
+        {showJoinTeam && (
+          <Card className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">Join Team</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Enter a 6-character team code to join an existing project
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setShowJoinTeam(false);
+                    setJoinCodeInput("");
+                    setError(null);
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex space-x-3">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={joinCodeInput}
+                    onChange={(e) =>
+                      setJoinCodeInput(e.target.value.toUpperCase())
+                    }
+                    placeholder="Enter team code (e.g., ABC123)"
+                    maxLength={6}
+                    className="w-full px-4 py-3 font-mono text-lg text-center tracking-widest bg-white dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                    onKeyPress={(e) => e.key === "Enter" && handleJoinTeam()}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Team codes are 6 characters (letters and numbers)
+                  </p>
+                </div>
+                <Button
+                  onClick={handleJoinTeam}
+                  disabled={joiningTeam || joinCodeInput.length !== 6}
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 px-6"
+                >
+                  {joiningTeam ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Joining...
+                    </>
+                  ) : (
+                    <>
+                      <Users className="w-4 h-4 mr-2" />
+                      Join Team
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Team Join Success */}
+        {teamJoinSuccess && (
+          <Card className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-green-700 dark:text-green-300">
+                    Welcome to the team! 🎉
+                  </h3>
+                  <p className="text-green-600 dark:text-green-400">
+                    You've successfully joined team{" "}
+                    <span className="font-mono font-bold">
+                      {teamJoinSuccess.teamCode}
+                    </span>{" "}
+                    for project "{teamJoinSuccess.projectTitle}".
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      navigate(
+                        `/hackathons/${teamJoinSuccess.hackathonId}/project`
+                      )
+                    }
+                    className="mt-3 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <FolderOpen className="w-4 h-4 mr-2" />
+                    View Project
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Add Hackathon Form */}
         {showAddForm && (
@@ -664,127 +860,141 @@ I'm ready to discuss any questions about this hackathon, including technical imp
             </CardContent>
           </Card>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4 duration-700 delay-300">
-            {filteredHackathons.map((hackathon, index) => {
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredHackathons.map((hackathon) => {
               const status = getHackathonStatus(hackathon);
               const totalPrize = getTotalPrizePool(hackathon);
 
               return (
                 <Card
                   key={hackathon._id}
-                  className="group relative overflow-hidden bg-zinc-50 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800 hover:shadow-xl hover:shadow-blue-500/10 transition-all hover:scale-[1.02] transform-gpu cursor-pointer animate-in slide-in-from-bottom-2 duration-500"
-                  style={{ animationDelay: `${index * 150}ms` }}
+                  className="group relative overflow-hidden bg-zinc-50 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800 hover:shadow-xl hover:shadow-blue-500/10 transition-all hover:scale-[1.02] transform-gpu cursor-pointer flex flex-col"
                   onClick={() => handleCardClick(hackathon._id)}
                 >
-                  <CardContent className="p-6">
-                    {/* Header */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-start space-x-3 flex-1">
-                        {hackathon.icon ? (
-                          <img
-                            src={hackathon.icon}
-                            alt={hackathon.title}
-                            className="w-12 h-12 rounded-lg object-cover mt-1"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display =
-                                "none";
-                            }}
-                          />
-                        ) : (
-                          <div className="mt-1 w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                            <Trophy className="w-6 h-6 text-white" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-                            {hackathon.title || "Untitled Hackathon"}
-                          </h3>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Badge className={status.color}>
-                              {status.label}
-                            </Badge>
-                            <CountdownTimer
-                              endDateTime={hackathon.endDateTime}
-                              endDate={hackathon.endDate}
-                              timezone={hackathon.timezone}
+                  <CardContent className="p-6 flex flex-col flex-grow">
+                    {/* Main Content - grows to fill space */}
+                    <div className="flex-grow">
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start space-x-3 flex-1">
+                          {hackathon.icon ? (
+                            <img
+                              src={hackathon.icon}
+                              alt={hackathon.title}
+                              className="w-12 h-12 rounded-lg object-cover mt-1"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display =
+                                  "none";
+                              }}
                             />
+                          ) : (
+                            <div className="mt-1 w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                              <Trophy className="w-6 h-6 text-white" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
+                              {hackathon.title || "Untitled Hackathon"}
+                            </h3>
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Badge className={status.color}>
+                                {status.label}
+                              </Badge>
+                              <CountdownTimer
+                                endDateTime={hackathon.endDateTime}
+                                endDate={hackathon.endDate}
+                                timezone={hackathon.timezone}
+                              />
+                            </div>
                           </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteHackathon(hackathon._id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteHackathon(hackathon._id);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
 
-                    {/* Prize Pool */}
-                    <div className="flex items-center space-x-2 mb-4">
-                      <DollarSign className="w-4 h-4 text-green-500" />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Total Prize Pool:{" "}
-                        <span className="text-green-600 dark:text-green-400 font-semibold">
-                          {totalPrize}
+                      {/* Prize Pool */}
+                      <div className="flex items-center space-x-2 mb-4">
+                        <DollarSign className="w-4 h-4 text-green-500" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Total Prize Pool:{" "}
+                          <span className="text-green-600 dark:text-green-400 font-semibold">
+                            {totalPrize}
+                          </span>
                         </span>
-                      </span>
-                    </div>
+                      </div>
 
-                    {/* Top 2 Sponsor Tracks */}
-                    {hackathon.tracks && hackathon.tracks.length > 0 && (
+                      {/* Top 2 Sponsor Tracks */}
                       <div className="mb-4">
                         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Top Sponsor Tracks:
+                          Sponsor Tracks:
                         </h4>
-                        <div className="space-y-2">
-                          {hackathon.tracks
-                            .filter((track) => track && track.name)
-                            .slice(0, 2)
-                            .map((track, index) => (
-                              <div
-                                key={index}
-                                className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3"
-                              >
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {track.name}
-                                  </span>
-                                  {track.totalPrize && (
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-xs"
-                                    >
-                                      {track.totalPrize}
-                                    </Badge>
-                                  )}
+                        {hackathon.tracks && hackathon.tracks.length > 0 ? (
+                          <div className="space-y-2">
+                            {hackathon.tracks
+                              .filter((track) => track && track.name)
+                              .slice(0, 2)
+                              .map((track, index) => (
+                                <div
+                                  key={index}
+                                  className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3"
+                                >
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                      {track.name}
+                                    </span>
+                                    {track.totalPrize && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        {track.totalPrize}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {track.subTracks &&
+                                    track.subTracks.length > 0 && (
+                                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                                        {track.subTracks.length} track
+                                        {track.subTracks.length > 1
+                                          ? "s"
+                                          : ""}{" "}
+                                        available
+                                      </p>
+                                    )}
                                 </div>
-                                {track.subTracks &&
-                                  track.subTracks.length > 0 && (
-                                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                                      {track.subTracks.length} track
-                                      {track.subTracks.length > 1
-                                        ? "s"
-                                        : ""}{" "}
-                                      available
-                                    </p>
-                                  )}
-                              </div>
-                            ))}
-                          {hackathon.tracks.length > 2 && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                              +{hackathon.tracks.length - 2} more sponsors
+                              ))}
+                            {hackathon.tracks.length > 2 && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                                +{hackathon.tracks.length - 2} more sponsors
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-8 text-center">
+                            <div className="text-gray-400 dark:text-gray-500 mb-2">
+                              <Trophy className="w-8 h-8 mx-auto opacity-50" />
+                            </div>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              No sponsor tracks found
                             </p>
-                          )}
-                        </div>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                              This hackathon may have general tracks only
+                            </p>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
 
-                    {/* Actions */}
+                    {/* Actions - always at bottom */}
                     <div className="flex items-center justify-between pt-2">
                       <Button
                         variant="outline"

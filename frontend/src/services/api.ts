@@ -196,6 +196,17 @@ export interface HackathonProject {
   sourceMessageId?: string;
   notes?: string;
   progress?: 'planning' | 'development' | 'testing' | 'submission' | 'completed';
+  repositoryUrl?: string;
+  demoUrl?: string;
+  submissionUrl?: string;
+  teamMembers?: string[];
+  tags?: string[];
+  submissionAnswers?: Array<{
+    id: string;
+    question: string;
+    answer: string;
+    category: 'overview' | 'technical' | 'challenges' | 'track';
+  }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -403,6 +414,82 @@ export const hackathonApi = {
   deleteProject: (hackathonId: string) =>
     apiRequest(`/api/hackathons/${hackathonId}/project`, {
       method: 'DELETE',
+    }),
+
+  // Todo management
+  getTodos: (hackathonId: string) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project/todos`),
+
+  addTodo: (hackathonId: string, todoData: {
+    title: string;
+    description?: string;
+    priority?: 'low' | 'medium' | 'high';
+    dueDate?: string;
+  }) => apiRequest(`/api/hackathons/${hackathonId}/project/todos`, {
+    method: 'POST',
+    body: JSON.stringify(todoData),
+  }),
+
+  updateTodo: (hackathonId: string, todoId: string, todoData: {
+    title?: string;
+    description?: string;
+    completed?: boolean;
+    priority?: 'low' | 'medium' | 'high';
+    dueDate?: string;
+  }) => apiRequest(`/api/hackathons/${hackathonId}/project/todos/${todoId}`, {
+    method: 'PUT',
+    body: JSON.stringify(todoData),
+  }),
+
+  deleteTodo: (hackathonId: string, todoId: string) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project/todos/${todoId}`, {
+      method: 'DELETE',
+    }),
+
+  generateTodos: (hackathonId: string) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project/todos/generate`, {
+      method: 'POST',
+    }),
+
+  generateAIAnswer: (hackathonId: string, question: string, context?: any) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project/ai/answer`, {
+      method: 'POST',
+      body: JSON.stringify({ question, context }),
+    }),
+
+  // Fetch GitHub commits for a project
+  getGitHubCommits: (hackathonId: string, count?: number) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project/github/commits${count ? `?count=${count}` : ''}`),
+
+  // Team collaboration APIs
+  generateTeamCode: (hackathonId: string) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project/team/generate`, {
+      method: 'POST',
+    }),
+
+  joinTeamByCode: (teamCode: string) =>
+    apiRequest('/api/hackathons/team/join', {
+      method: 'POST',
+      body: JSON.stringify({ teamCode }),
+    }),
+
+  getTeamInfo: (hackathonId: string) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project/team`),
+
+  removeTeamMember: (hackathonId: string, memberId: string) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project/team/members/${memberId}`, {
+      method: 'DELETE',
+    }),
+
+  leaveTeam: (hackathonId: string) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project/team/leave`, {
+      method: 'POST',
+    }),
+
+  updateTeamSettings: (hackathonId: string, settings: { allowJoin?: boolean; maxMembers?: number }) =>
+    apiRequest(`/api/hackathons/${hackathonId}/project/team/settings`, {
+      method: 'PUT',
+      body: JSON.stringify(settings),
     }),
 };
 
