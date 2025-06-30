@@ -24,8 +24,27 @@ const Navigation: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    // Check initial theme
+    const checkTheme = () => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    };
+
+    checkTheme();
+
+    // Watch for theme changes
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,6 +96,19 @@ const Navigation: React.FC = () => {
     <>
       {/* Animated background blur effect */}
       <div className="fixed top-0 left-0 right-0 h-20 transition-all duration-700 pointer-events-none z-40" />
+
+      {/* Circle Logo - Top Right Corner */}
+      <div className="fixed top-0 right-0 z-[60] p-4">
+        <img
+          src={
+            isDarkMode
+              ? "/black_circle_360x360.png"
+              : "/white_circle_360x360.png"
+          }
+          alt="Codra Circle"
+          className="w-12 h-12 md:w-16 md:h-16 transition-opacity duration-300 drop-shadow-lg"
+        />
+      </div>
 
       {/* Main Navigation */}
       <nav
@@ -210,6 +242,7 @@ const Navigation: React.FC = () => {
             {/* Mobile menu controls */}
             <div className="md:hidden flex items-center space-x-3">
               <ThemeToggle />
+
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className={`relative p-2 rounded-xl transition-all duration-300 group overflow-hidden ${
